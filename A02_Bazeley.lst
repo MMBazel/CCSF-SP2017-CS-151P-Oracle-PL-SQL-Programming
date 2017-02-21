@@ -1,0 +1,170 @@
+SQL> @A02_Bazeley.sql
+SQL> set feedback 1
+SQL> set pagesize 999
+SQL> set trimspool on
+SQL> set linesize 200
+SQL> set tab off
+SQL> clear columns
+SQL> set serveroutput on
+SQL> 
+SQL> /*  Mikiko Bazeley */
+SQL> 
+SQL> /*  TASK 00 */
+SQL> select user, sysdate
+  2  from dual;
+
+USER                           SYSDATE
+------------------------------ ---------
+SYS                            20-FEB-17
+
+1 row selected.
+
+SQL> 
+SQL> /*  TASK 01 */
+SQL> 
+SQL> ACCEPT weather PROMPT 'What is the weather today? 1: Sunny, 2: Rainy, 3: Snowy. Please enter your selection:  '
+What is the weather today? 1: Sunny, 2: Rainy, 3: Snowy. Please enter your selection:  2
+SQL> DECLARE
+  2    weatherAdvice VARCHAR2(50);
+  3    weather NUMBER(1) := &weather;
+  4  BEGIN
+  5  weatherAdvice :=
+  6    CASE weather
+  7    WHEN 1 THEN 'Remember your sunglasses!'
+  8    WHEN 2 THEN 'Remember your umbrella'
+  9    WHEN 3 THEN 'Remember your hat'
+ 10    ELSE 'Invalid weather'
+ 11    END;
+ 12  
+ 13  DBMS_OUTPUT.PUT_LINE(weatherAdvice);
+ 14  END;
+ 15  
+ 16  /
+old   3:   weather NUMBER(1) := &weather;
+new   3:   weather NUMBER(1) := 2;
+Remember your umbrella
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> /*  TASK 02 */
+SQL> 
+SQL> ACCEPT employeeID PROMPT 'Please enter the employee ID to update salary:  '
+Please enter the employee ID to update salary:  155
+SQL> DECLARE
+  2    employeeID emp_employees.emp_id%TYPE := &employeeID;
+  3    empSalary emp_employees.salary%TYPE := 0;
+  4    jobTitle emp_jobs.job_title%TYPE :='';
+  5  BEGIN
+  6    SELECT ej.job_title, ee.salary
+  7      INTO jobTitle, empSalary
+  8      FROM emp_employees ee
+  9      JOIN emp_jobs ej USING(job_id)
+ 10      WHERE ee.emp_id=employeeID;
+ 11    DBMS_OUTPUT.PUT_LINE('The original salary is: $'|| TO_CHAR(empSalary));
+ 12    IF jobTitle = 'President'
+ 13      THEN empSalary := empSalary*1.10;
+ 14      ELSIF jobTitle='Sales Manager'
+ 15        THEN empSalary := empSalary*1.15;
+ 16      ELSIF jobTitle='Sales Rep'
+ 17        THEN empSalary := empSalary*1.20;
+ 18      ELSE empSalary := empSalary;
+ 19        END IF;
+ 20    UPDATE emp_employees
+ 21      SET salary = empSalary
+ 22      WHERE emp_id = employeeID;
+ 23    DBMS_OUTPUT.PUT_LINE('The new salary is: $'|| TO_CHAR(empSalary));
+ 24  END;
+ 25  
+ 26  /
+old   2:   employeeID emp_employees.emp_id%TYPE := &employeeID;
+new   2:   employeeID emp_employees.emp_id%TYPE := 155;
+The original salary is: $29000
+The new salary is: $34800
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> /*  TASK 03 */
+SQL> 
+SQL> ACCEPT square PROMPT 'Enter a positive integer less than or equal 20:  '
+Enter a positive integer less than or equal 20:  18
+SQL> DECLARE
+  2    top NUMBER(2) := &square;
+  3    counter NUMBER(2) := 1;
+  4  BEGIN
+  5    IF top>20 THEN
+  6      DBMS_OUTPUT.PUT_LINE('Invalid Number');
+  7    ELSE
+  8      LOOP
+  9          DBMS_OUTPUT.PUT_LINE(TO_CHAR(counter) || ' squared = '|| counter * counter);
+ 10          counter := counter+1;
+ 11          EXIT WHEN counter = top+1;
+ 12      END LOOP;
+ 13  END IF;
+ 14  END;
+ 15  /
+old   2:   top NUMBER(2) := &square;
+new   2:   top NUMBER(2) := 18;
+1 squared = 1
+2 squared = 4
+3 squared = 9
+4 squared = 16
+5 squared = 25
+6 squared = 36
+7 squared = 49
+8 squared = 64
+9 squared = 81
+10 squared = 100
+11 squared = 121
+12 squared = 144
+13 squared = 169
+14 squared = 196
+15 squared = 225
+16 squared = 256
+17 squared = 289
+18 squared = 324
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> /*  TASK 04 */
+SQL> 
+SQL> 
+SQL> ACCEPT future PROMPT 'Please enter the year you would like to travel to:  '
+Please enter the year you would like to travel to:  3345
+SQL> DECLARE
+  2    future NUMBER(6) := &future;
+  3    diff NUMBER(6) := 0;
+  4  BEGIN
+  5    diff := future - (EXTRACT(YEAR FROM SYSDATE));
+  6    DBMS_OUTPUT.PUT_LINE('This will be '||TO_CHAR(diff)||' years in the future.');
+  7    FOR i IN REVERSE 1..10 LOOP
+  8      DBMS_OUTPUT.PUT_LINE (TO_CHAR(i));
+  9    END LOOP;
+ 10    DBMS_OUTPUT.PUT_LINE('The year is now '|| TO_CHAR(future));
+ 11  END;
+ 12  
+ 13  /
+old   2:   future NUMBER(6) := &future;
+new   2:   future NUMBER(6) := 3345;
+This will be 1328 years in the future.
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+The year is now 3345
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> spool off

@@ -1,0 +1,2769 @@
+SQL> @A01_Bazeley.sql;
+SQL> set echo on
+SQL> set feedback 1
+SQL> set pagesize 999
+SQL> set trimspool on
+SQL> set linesize 200
+SQL> set tab off
+SQL> clear columns
+SQL> set serveroutput on
+SQL> 
+SQL> /*  Mikiko Bazeley */
+SQL> 
+SQL> /*  TASK 00 */
+SQL> select user, sysdate
+  2  from dual;
+
+USER                           SYSDATE
+------------------------------ ---------
+SYS                            31-JAN-17
+
+1 row selected.
+
+SQL> 
+SQL> /*  TASK 01 */
+SQL> BEGIN
+  2  
+  3      DBMS_OUTPUT.PUT_LINE('Hello World!');
+  4  
+  5  END;
+  6  
+  7  /
+Hello World!
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> /*  TASK 02  */
+SQL> 
+SQL> DECLARE
+  2    magicNumber NUMBER :=1;
+  3    todaysDate DATE := SYSDATE;
+  4    letter CHAR(1) :='A';
+  5  BEGIN
+  6    DBMS_OUTPUT.put_line(magicNumber);
+  7     DBMS_OUTPUT.put_line(todaysDate);
+  8      DBMS_OUTPUT.put_line(letter);
+  9   magicNumber:=magicNumber+1;
+ 10  todaysDate:=todaysDate+1;
+ 11      letter:='B';
+ 12   DBMS_OUTPUT.put_line(magicNumber);
+ 13  DBMS_OUTPUT.put_line(todaysDate);
+ 14      DBMS_OUTPUT.put_line(letter);
+ 15  END;
+ 16  
+ 17  /
+1
+31-JAN-17
+A
+2
+01-FEB-17
+B
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> /*  TASK 03 */
+SQL> 
+SQL> ACCEPT ticketGuess PROMPT 'Please Enter Number of Tickets to Purchase:'
+Please Enter Number of Tickets to Purchase:50
+SQL> 
+SQL> DECLARE
+  2    maxCapacity INT :=41159;
+  3    ticketNo int :=&ticketGuess;
+  4    remainderTickets int;
+  5  BEGIN
+  6    remainderTickets := maxCapacity - ticketNo;
+  7    DBMS_OUTPUT.put_line('No. of tickets left:  ' || TO_CHAR(remainderTickets));
+  8  END;
+  9  
+ 10  /
+old   3:   ticketNo int :=&ticketGuess;
+new   3:   ticketNo int :=50;
+No. of tickets left:  41109
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> @ \myScripts\151A_AltgeldMart_creates.sql;
+SQL> -- AltgeldMart Oracle 151A
+SQL> 
+SQL> -- clean up previous tables
+SQL> 
+SQL> 
+SQL> drop table oe_orderDetails;
+
+Table dropped.
+
+SQL> drop table oe_orderHeaders;
+
+Table dropped.
+
+SQL> drop table oe_shippingModes;
+
+Table dropped.
+
+SQL> drop table cust_customers;
+
+Table dropped.
+
+SQL> 
+SQL> drop table prd_products;
+
+Table dropped.
+
+SQL> drop table prd_categories;
+
+Table dropped.
+
+SQL> 
+SQL> drop table emp_employees;
+
+Table dropped.
+
+SQL> drop table emp_jobs;
+
+Table dropped.
+
+SQL> drop table emp_departments;
+
+Table dropped.
+
+SQL> drop table emp_locations;
+
+Table dropped.
+
+SQL> 
+SQL> 
+SQL> create table  emp_locations(
+  2      loc_id              integer       not null
+  3    , loc_postal_code     varchar2(12)  not null
+  4    , loc_street_address  varchar2(25)  not null
+  5    , loc_city            varchar2(25)  not null
+  6    , loc_state_province  varchar2(25)  not null
+  7    , loc_country_id      char(2)       not null
+  8    , loc_type            varchar2(25)  null
+  9    , constraint loc_pk                 primary key(loc_id)
+ 10    , constraint loc_id_range           check(loc_id >= 1000)
+ 11  );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> create table emp_departments(
+  2      dept_id            integer        not null
+  3    , dept_name          varchar2(50)   not null
+  4    , loc_id             integer        null
+  5    , constraint dept_pk                primary key(dept_id)
+  6    , constraint dept_loc_fk            foreign key (loc_id) references emp_locations
+  7    , constraint dept_id_range          check(dept_id >= 0)
+  8  );
+
+Table created.
+
+SQL> 
+SQL> create table emp_jobs(
+  2      job_id          integer           not null
+  3    , job_title       varchar2(50)      not null
+  4    , min_salary      number (8,2)      null
+  5    , max_salary      number (8,2)      null
+  6    , constraint jobs_pk                primary key(job_id)
+  7    , constraint job_id_range           check(job_id > 0)
+  8    , constraint min_salary_range       check (min_salary >= 0)
+  9    , constraint max_salary_range       check (max_salary >= 0)
+ 10  );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> create table emp_employees(
+  2      emp_id          integer           not null
+  3    , name_last       varchar2(25)      not null
+  4    , name_first      varchar2(25)      null
+  5    , ssn             char(9)           not null
+  6    , emp_mng         integer           null
+  7    , dept_id         integer           not null
+  8    , hire_date       date              not null
+  9    , salary          number (8, 2)     null
+ 10    , job_id          integer           not null
+ 11    , constraint emp_pk                 primary key(emp_id)
+ 12    , constraint dept_emp_fk            foreign key (dept_id)       references emp_departments
+ 13    , constraint mng_emp_fk             foreign key (emp_mng)       references emp_employees(emp_id)
+ 14    , constraint job_emp_fk             foreign key (job_id)        references emp_jobs
+ 15    , constraint emp_id_range           check (emp_id >= 100)
+ 16    , constraint emp_ssn_un             unique(ssn)
+ 17    , constraint hire_date_range        check(hire_date >= date '1950-01-01')
+ 18    , constraint hire_date_ck           check(trunc(hire_date) = hire_date)
+ 19    , constraint salary_range           check (salary >= 0)
+ 20   );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> -- Products
+SQL> 
+SQL> create table prd_categories(
+  2      catg_id         varchar2(6)       not null
+  3    , catg_desc       varchar2(25)      not null
+  4    , constraint catg_pk                primary key(catg_id)
+  5    , constraint catg_dec_un            unique(catg_desc)
+  6  );
+
+Table created.
+
+SQL> 
+SQL> create table prd_products(
+  2      prod_id         integer           not null
+  3    , prod_name       varchar2(25)      not null
+  4    , prod_desc       varchar2(50)      null
+  5    , prod_list_price number(6,2)       not null
+  6    , catg_id         varchar2(6)       not null
+  7    , constraint prod_pk                primary key (prod_id)
+  8    , constraint prod_catg_fk           foreign key (catg_id)       references prd_categories
+  9    , constraint prod_id_range          check (prod_id >= 100)
+ 10    , constraint list_price_range       check (prod_list_price >= 0)
+ 11  );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> create table cust_customers(
+  2      customer_id         integer           not null
+  3    , customer_name_last  varchar2(25)      not null
+  4    , customer_name_first varchar2(25)      null
+  5    , customer_credit_limit    integer           null
+  6    , constraint credit_limit_range     check(customer_credit_limit > 0)
+  7    , constraint cust_pk                primary key(customer_id)
+  8    , constraint cust_id_range          check (customer_id >= 100000)
+  9  );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> create table oe_shippingModes (
+  2      shipping_mode_id   char(6)        not null
+  3    , shipping_mode_desc varchar2(25)   not null
+  4    , constraint shp_mode_pk            primary key (shipping_mode_id)
+  5    , constraint shp_desc_un            unique (shipping_mode_desc)
+  6    );
+
+Table created.
+
+SQL> 
+SQL> create table oe_orderHeaders(
+  2      order_id           integer          not null
+  3    , order_date         date             not null
+  4    , customer_id          integer          not null
+  5    , order_mode         varchar2(25)     not null
+  6    , shipping_mode_id    char(6)          null
+  7    , order_status       integer          not null
+  8    , sales_rep_id     integer          null
+  9    , constraint ord_pk                 primary key (order_id)
+ 10    , constraint shp_mode_fk            foreign key (shipping_mode_id) references oe_shippingModes
+ 11    , constraint ord_cust_fk            foreign key (customer_id)       references cust_customers
+ 12    , constraint ord_sales_rep_fk       foreign key (sales_rep_id)  references emp_employees
+ 13    , constraint ord_status_range       check (order_status between 1 and 9)
+ 14    , constraint ord_mode_values        check (order_mode in ('PHONE','ONLINE','DIRECT'))
+ 15    , constraint ord_date_range         check(order_date >=  date '1950-01-01')
+ 16    , constraint ord_date_only          check(order_date = trunc(order_date))
+ 17    , constraint ord_id_range           check(order_id > 0)
+ 18  );
+
+Table created.
+
+SQL> 
+SQL> create table oe_orderDetails(
+  2      order_id           integer          not null
+  3    , line_item_id     integer          not null
+  4    , prod_id          integer          not null
+  5    , quantity_ordered integer          not null
+  6    , quoted_price     number (6,2)     not null
+  7    , constraint ord_details_pk         primary key(order_id, line_item_id)
+  8    , constraint ord_ord_fk             foreign key (order_id)  references oe_orderHeaders
+  9    , constraint ord_prod_fk            foreign key (prod_id)   references prd_products
+ 10    , constraint ord_price_range        check (quoted_price  >= 0)
+ 11    , constraint line_item_id_range     check (line_item_id > 0)
+ 12    , constraint ord_quant_range        check (quantity_ordered  >= 0)
+ 13  );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> @ \myScripts\151A_AltgeldMart_inserts.sql;
+SQL> -- demo tables for cs 151A populate tables
+SQL>  --  clean up previous table contents
+SQL> 
+SQL> delete from  oe_orderDetails;
+
+0 rows deleted.
+
+SQL> delete from  oe_orderHeaders;
+
+0 rows deleted.
+
+SQL> delete from  oe_shippingModes;
+
+0 rows deleted.
+
+SQL> 
+SQL> delete from  cust_customers;
+
+0 rows deleted.
+
+SQL> 
+SQL> delete from  prd_products;
+
+0 rows deleted.
+
+SQL> delete from  prd_categories;
+
+0 rows deleted.
+
+SQL> 
+SQL> delete from  emp_employees;
+
+0 rows deleted.
+
+SQL> delete from  emp_jobs;
+
+0 rows deleted.
+
+SQL> delete from  emp_departments;
+
+0 rows deleted.
+
+SQL> delete from  emp_locations;
+
+0 rows deleted.
+
+SQL> 
+SQL> 
+SQL> -- Locations
+SQL> insert into emp_locations(loc_id, loc_street_address, loc_postal_code, loc_city, loc_state_province, loc_country_id, loc_type )
+  2  values (1400, '2014 Jabberwocky Rd', '26192', 'Southlake', 'Texas', 'US', 'warehouse'  );
+
+1 row created.
+
+SQL> 
+SQL> insert into emp_locations(loc_id, loc_street_address, loc_postal_code, loc_city, loc_state_province, loc_country_id, loc_type )
+  2  values (1500, '2011 Interiors Blvd', '99236', 'South San Francisco', 'California', 'US' , 'warehouse' );
+
+1 row created.
+
+SQL> 
+SQL> insert into emp_locations(loc_id, loc_street_address, loc_postal_code, loc_city, loc_state_province, loc_country_id, loc_type )
+  2  values (1560, '50 Pacific Ave', '94112', 'San Francisco', 'California', 'US' , 'office');
+
+1 row created.
+
+SQL> 
+SQL> insert into emp_locations(loc_id, loc_street_address, loc_postal_code, loc_city, loc_state_province, loc_country_id, loc_type )
+  2  values (1800, '147 Spadina Ave', 'M5V 2L7', 'Toronto', 'Ontario', 'CA', 'office' );
+
+1 row created.
+
+SQL> 
+SQL> insert into emp_locations(loc_id, loc_street_address, loc_postal_code, loc_city, loc_state_province, loc_country_id, loc_type )
+  2  values (2700,  'Schwanthalerstr. 7031','80925', 'Munich', 'Bavaria', 'DE', null );
+
+1 row created.
+
+SQL> 
+SQL> insert into emp_locations(loc_id, loc_street_address, loc_postal_code, loc_city, loc_state_province, loc_country_id, loc_type )
+  2  values (3200,  'Mariano Escobedo 9991', '11932','Mexico City', 'Distrito Federal', 'MX', 'office')
+  3  ;
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> -- Employees
+SQL> -- Departments
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (10, 'Administration',  1560 );
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (20, 'Marketing',  1400 );
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (30, 'Development',  1500);
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (35, 'Cloud Computing', null);
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (210, 'IT Support',  1800);
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (215, 'IT Support',  2700);
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (80, 'Sales',  1400 );
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (90, 'Shipping', null);
+
+1 row created.
+
+SQL> insert into emp_departments(dept_id, dept_name, loc_id)
+  2  values (95, 'Logistics', null);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> -- Jobs
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (1, 'President', 100000, 100000);
+
+1 row created.
+
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (2, 'Marketing', 5000, 75000);
+
+1 row created.
+
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (4, 'Sales Manager', 15000, 60000);
+
+1 row created.
+
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (8, 'Sales Rep', 10000,30000);
+
+1 row created.
+
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (16, 'Programmer', 60000, 120000);
+
+1 row created.
+
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (32, 'Code Debugger', 60000, null);
+
+1 row created.
+
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (64, 'DBA', 60000, null);
+
+1 row created.
+
+SQL> insert into emp_jobs(job_id, job_title, min_salary, max_salary)
+  2  values (128, 'RD', 60000, null);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> -- Employees
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values
+  3    (100, 'Steven',  'King',   '123456789', null,  10, date '1989-06-17', 100000, 001);
+
+1 row created.
+
+SQL> 
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values (145, 'Oliver',  'Russ',   '125786901', 100,   80, date '2001-03-30',  59000, 004);
+
+1 row created.
+
+SQL> 
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (150, 'Harold',  'Tuck',   '125689901', 145,   80, date '2001-10-28',  20000, 008);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (155, 'Helen',   'Hiller', '120845901', 145,   80, date '2004-03-05',  29000, 008);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (201, 'Daniel',  'Harts',  '789012345', 100,   20, date '2004-08-25',  15000, 002);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (101, 'Karen',   'Koch',   '112345678', 100,   30, date '2008-06-17',  98005, 016);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (205, 'Pat',     'Higgs',  '258712345', 101,   30, date '2008-06-01',  75000, 016);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values (102, 'Helen',   'D''Haa', '187008412', 100,  215, date '2010-06-12',  60300, 064);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (203, 'Bob',     'Mays',   '145678412', 101,   30, date '2010-06-30',  64450, 016);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (103, 'Maria',   'Hunol',  '154658970', 102,  210, date '2010-08-01',  69000, 064);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (162, 'Stratus', 'Holme',  '128585289', 101,   35, date '2011-03-17',  98000, 016);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (146, 'Rene',    'Partne', '243456543', 100,  215, date '2011-03-29',  88954, 064);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (160, 'Robert',  'Dorna',  '354567415', 146,  215, date '2011-06-15',  65000, 032);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (161, 'Robert',  'Dewal',  '454567415', 146,  215, date '2011-06-15', 120000, 016);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (200, 'Cumulus', 'Whale',  '648772345', 101,   35, date '2011-06-17',  65000, 016);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (207, 'Russel',  'Russ',   '115487758', 145,   35, date '2011-06-17',  30000, 008);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (108, 'Oliver',  'Green',  '119012345', 101,   30, date '2012-12-31',  62000, 016);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (109, 'Robert',  'Fiet',   '854567415', 108,   30, date '2012-12-31',  65000, 032);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (110, 'Helen',   'Chen',   '217008412', 108,   30, date '2012-12-31',  60300, 032);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (206, 'Rene',    'Geitz',  '541456543', 205,   30, date '2013-06-15',  88954, 032);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (204, 'Robert',  'King',   '554167415', 205,   30, date '2013-06-15',  99090, 032);
+
+1 row created.
+
+SQL> insert into emp_employees(emp_id, name_first, name_last,  ssn, emp_mng, dept_id, hire_date, salary, job_id)
+  2  values  (104, 'Oliver',  'Ernst',  '125876901', 103,  210, date '2015-01-25',  65000, 032);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL>  --  Products
+SQL> --  prd_categories
+SQL> insert into prd_categories values ('APL', 'APPLIANCES');
+
+1 row created.
+
+SQL> insert into prd_categories values ('BK',  'BOOKS');
+
+1 row created.
+
+SQL> insert into prd_categories values ('CEQ', 'COMPUTER EQUIPMENT');
+
+1 row created.
+
+SQL> insert into prd_categories values ('GFD', 'GOURMET FOOD');
+
+1 row created.
+
+SQL> insert into prd_categories values ('HD',  'HARDWARE');
+
+1 row created.
+
+SQL> insert into prd_categories values ('HW',  'HOUSEWARES');
+
+1 row created.
+
+SQL> insert into prd_categories values ('PET', 'PET SUPPLIES');
+
+1 row created.
+
+SQL> insert into prd_categories values ('SPG', 'SPORTING GOODS');
+
+1 row created.
+
+SQL> insert into prd_categories values ('MUS', 'MUSIC');
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> -- prd_products
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1000, 'HW',     125.00, 'Hand Mixer', 'Seven speed BnD hand mixer, black')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1010, 'SPG',    150.00,    'Weights',   'Set of 12 barbells 15 pounds')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1020, 'SPG',     12.95, 'Dartboard', 'Cork-backed dartboard with hanger')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1030, 'SPG',     29.95, 'Basketball',  'Basketball')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1070, 'HW',      25.50,    'Iron', 'Steam and dry iron SunShine, Yellow')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1071, 'HW',      25.50,    'Iron', 'Steam and dry iron SunShine, Blue')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1072, 'HW',      25.50,    'Iron', 'Steam and dry iron SunShine, Red')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1080, 'HW',      25.00,    'Cornpopper', 'Cornpopper 12 quart automatic shutoff')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1090, 'HW',     149.99, 'Gas grill', 'Gas grill')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1100, 'HW',      49.99, 'Blender', 'Twelve-speed Blender')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1140, 'PET',     14.99, 'Bird cage- simple', 'Bird cage- simple; wire frame two feeder trays')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1141, 'PET',     99.99, 'Bird cage- deluxe', 'Bird cage- deluxe;floor model, with fly space')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1142, 'PET',      2.50, 'Bird seed', 'Bird seed mix with sunflowers')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1143, 'PET',      2.50, 'Bird seed deluxe', 'Bird seed mix with more sunflower seeds')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1150, 'PET',      4.99, 'Cat exerciser', 'Cat exerciser')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1151, 'PET',     14.99, 'Cat pillow', 'Cat pillow, removable cloth cover')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1152, 'PET',     55.00, 'Cat pillow Leather', 'Cat pillow, removable leather cover')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1040, 'SPG',    349.95, 'Treadmill', 'Super Flyer Treadmill')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1050, 'SPG',    269.95, 'Stationary bike', 'Deluxe Stationary bike')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1060, 'SPG',    255.95, 'Mountain bike', 'Deluxe Mountain bike')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1160, 'HW',     149.99, 'Mixer Deluxe', 'Stand Mixer with attachments')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (4567, 'PET',    549.99, 'Deluxe Cat Tree', 'Our highest end cat tree- you gotta see this')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (4568, 'PET',    549.99, 'Deluxe Cat Bed', 'Satin four-poster cat bed')
+  3  ;
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (4569, 'APL',    349.95, 'Mini Dryer', 'Sized for the apartment')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (4575, 'HW',      49.95, 'Electric can opener', 'GE model 34PG98')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (4576      , 'PET',     29.95, 'Cosmo cat nip', 'Primo brand of catnip for your favorite cat')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (4577, 'PET',     29.95, 'Cat leash', 'Leather cat leash with harness')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1110, 'HW',      49.99, 'Pancake griddle', 'Electric Pancake griddle')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1120, 'APL',    549.99, 'Washer', 'Full-sized Washer')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1125, 'APL',    500.00, 'Dryer', 'Low Energy Dryer')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1126, 'APL',    850.00, 'WasherDryer', 'Low Energy Washer Dryer combo');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (1130, 'APL',    149.99, 'Mini Freezer', 'Mini freezer, sized for the office')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (5000, 'GFD',     12.50, 'Fingerling Potatoes', 'Cello bag of mixed fingerling potatoes')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (5001, 'GFD',      5.00, 'Ginger Preserve', 'Dundee Ginger Preserve 12 oz jar')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (5002, 'HD',      23.00, 'Ball-Peen Hammer', '16 oz Jacketed Graphite Ball-peen hammer')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (5004, 'HD',      15.00, 'Dead Blow Hammer', '10 oz Steel Head Dead Blow hammer')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (5005, 'HD',      45.00,  'Shingler Hammer', 'Steel Shingler hammer')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values (5008, 'HD',      12.50,  'Claw Framing', '22 oz Graphite checkered face framing hammer')
+  3  ;
+
+1 row created.
+
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2987,  'MUS',           15.87,'B000005HGK',  'Stanley Turrentine - Ballads');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2487,  'MUS',            9.45, 'B004Y03N7E',  'Stanley Turrentine - Don''t Mess With Mr. T');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2947,  'MUS',           12.45,'B000GFRE76',  'Ornette Coleman - Sound Grammar');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2984,  'MUS',           15.87, 'B000000Y7L', 'John Coltrane - Lush Life');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2337,  'MUS',           15.87, 'B000005H40', 'John Coltrane - Blue Train');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2933,  'MUS',           12.45, 'B0006J2FLW', 'David Newman - I Remember Brother Ray');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2412,  'MUS',            9.87, 'B00005UF3I', 'David Newman - Davey Blue');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2746,  'MUS',           14.50, 'B00000JWCM', 'Charles Mingus - Blues &' || ' Politics');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2747,  'MUS',           14.50, 'B000002I4Q', 'Charles Mingus - Blues &' || 'Roots');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2234,  'MUS',           15.88, 'B000002I7U',  'Charles Mingus - Pithecanthropus Erectus');
+
+1 row created.
+
+SQL> 
+SQL> insert into prd_products  (prod_id, catg_id,  prod_list_price, prod_name, prod_desc)
+  2  values
+  3  (2014,  'MUS',           15.95, 'B000005INR', 'Bix Beiderbecke - Tiger Rag');
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> -- oe_shippingModes
+SQL> insert into oe_shippingModes (shipping_mode_id, shipping_mode_desc)
+  2  values ('FEDEX1', 'Fed Ex Overnight' );
+
+1 row created.
+
+SQL> insert into oe_shippingModes (shipping_mode_id, shipping_mode_desc)
+  2  values ('FEDEX2', 'Fed Ex Next Day' );
+
+1 row created.
+
+SQL> insert into oe_shippingModes (shipping_mode_id, shipping_mode_desc)
+  2  values ('USPS1', 'Postal Priority' );
+
+1 row created.
+
+SQL> insert into oe_shippingModes (shipping_mode_id, shipping_mode_desc)
+  2  values  ('USPS2',  'Postal Regular' );
+
+1 row created.
+
+SQL> insert into oe_shippingModes (shipping_mode_id, shipping_mode_desc)
+  2  values  ('UPSGR',  'UPS Ground' );
+
+1 row created.
+
+SQL> insert into oe_shippingModes (shipping_mode_id, shipping_mode_desc)
+  2  values  ('UPSAIR', 'UPS Air Freight' );
+
+1 row created.
+
+SQL> insert into oe_shippingModes (shipping_mode_id, shipping_mode_desc)
+  2  values  ('UPSEXP', 'UPS Express' );
+
+1 row created.
+
+SQL> 
+SQL> --
+SQL> 
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (401250, 'Samuel','Morse', 750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (401890, 'William','Northrep', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (402100, 'William','Morise', 750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (402110, 'John','Coltrane', 750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (402120, 'Tyner','McCoy', 750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (402500, 'Elton John','Jones', null)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (403000, 'Sally','Williams', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (403010, 'Elisha','Otis', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (403050 , 'Alexis','Hamilton' , 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (403100, 'James','Stevenson', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (403500, 'JAMES','Stevenson', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (403750, 'Mary','O''Leary', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (403760, 'Mary','O''Leary', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (903000, 'Arnold','McGold', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (404000, 'Frederick','Olmsted', 3500)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (404100, 'D. K.','Button', 3500)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (900300, 'Arnold','McGold', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values (404150, 'Tom','Dancer', 3500)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (404180, 'Danielle','Shay', 3500)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (404890, 'Florence','Kelley', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (404900, 'Al','Williams', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values (404950, 'William','Morris', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (405000, 'David','Day', null)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values (409010, 'William','Morris', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (409020, 'William','Max' , 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values (915001, 'Abigail','Adams', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (400801, 'Geo','Washington', 750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (409030, 'Barry','Mazur', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (409150, 'Joan','Martin', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (400300, 'Arnold','McGold', 6000)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values (409160, 'Jane','Martin', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values (409190, null, 'Prince', 1750)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (408770, 'Clem','Clay', 7500)
+  3  ;
+
+1 row created.
+
+SQL> insert into cust_customers(customer_id, customer_name_first, customer_name_last, customer_credit_limit)
+  2  values  (408777, 'Morris','Morise', 7500)
+  3  ;
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> -- oe_orderHeaders   and  oe_orderDetails
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 540,   date '2015-06-02', 'DIRECT', 404950, 'FEDEX1', 1, 145);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 540, 1, 1080,    22.50, 2);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 540, 2, 1110,    49.99, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 540, 3, 1152,    55.25, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 390,   date '2015-06-04', 'DIRECT', 403000, 'FEDEX1', 9,  155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 390, 1, 1010,   175.00,  8);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 395,   date '2015-06-04', 'DIRECT', 403000, 'FEDEX1', 9,  155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 395, 1, 1010,   195.00, 15);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 301,   date '2015-06-04', 'DIRECT', 401250, 'FEDEX2', 9, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 301, 1, 1100,   205.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 302,   date '2015-06-04', 'DIRECT', 404000, 'USPS1', 2,  150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 302, 1, 1140,    12.00, 10);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 302, 2, 1040,   349.95,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 303,   date '2015-06-10', 'DIRECT', 404100, 'USPS1', 2,  155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 303, 1, 1000,   125.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 306,  date '2015-06-04', 'DIRECT', 903000, 'USPS1', 9, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 306, 1, 1120,   500.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 306, 2, 1125,   500.00,  1);
+
+1 row created.
+
+SQL> 
+SQL>  insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 307,  date '2015-06-04', 'DIRECT', 900300, 'USPS1', 9, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 307, 1, 1120,   450.00, 5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 307, 2, 1125,   450.00, 5);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 312,  date '2015-06-07', 'DIRECT', 903000, 'USPS1', 5,  145);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 312, 1, 1040,   300.00, 10);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 312, 2, 1050,   250.00, 10);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 312, 3, 1060,   140.50, 10);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 312, 4, 1060,   125.00, 20);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 313,  date '2015-06-07', 'DIRECT', 903000, 'USPS1', 5,  155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 313, 1, 1000,   125.00, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 324,  date '2015-06-11', 'DIRECT', 409030, 'UPSGR',  9, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 324, 1, 4576,    29.95, 20);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 378,  date '2015-06-14', 'DIRECT', 400300, 'USPS1', 9, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 378, 1, 1120,   450.00, 5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 378, 2, 1125,   450.00, 5);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 411,   date '2015-08-01', 'DIRECT', 404950, 'FEDEX1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 411, 1, 1071,    25.00,  2);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 411, 2, 1072,    24.25,  2);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 411, 3, 1060,   255.95,  2);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 412,   date '2015-08-01', 'DIRECT', 403000, 'UPSGR', 1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 412, 2, 1130,   149.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 413,   date '2015-08-07','ONLINE', 409150, 'USPS1', 3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 413, 2, 1110,   49.99,  10);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 413, 3, 2014,   15.59,  5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 413, 4, 2984,   15.87,  5);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 414,   date '2015-08-20','ONLINE', 409150, 'UPSEXP', 3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 414, 1, 1020,    12.95,  13);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 415,   date '2015-08-23','ONLINE', 409150, 'UPSEXP', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 415, 1, 1141,    75.99,  5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 415, 2, 1125,   500.00,  5);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 550,   date '2015-08-02','DIRECT', 903000, NULL, 3, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 550, 1, 1010,   175.00, 10);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 550, 2, 1040,   300.25,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 551,   date '2015-08-03','DIRECT', 903000, NULL, 3, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 551, 1, 1010,   175.00, 20);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 552,  date '2015-08-12', 'DIRECT', 401250, 'FEDEX1', 2, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 552, 3, 2014,   15.59,  5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 552, 2, 2984,   15.87,  5);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 605,  date '2015-09-05', 'DIRECT', 404100, 'UPSGR',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 605, 1, 1080,    25.00, 12);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 605, 2, 1130,    112.95, 12);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 605, 3, 1060,   125.00,  5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 605, 4, 1080,    25.00, 12);
+
+1 row created.
+
+SQL>  insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 605, 5, 1010,    125.00, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 605, 6, 1020,    12.95, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 606,  date '2015-09-07', 'DIRECT', 409160, 'FEDEX1',  1, 207);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 606, 1, 1152,    55.00, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 607,  date '2015-09-15', 'DIRECT', 409160, 'FEDEX1',  1, 207);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 607, 1, 1070,    22.25, 10);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 608,  date '2015-09-26', 'DIRECT', 403000, 'UPSGR',  1, 207);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 608, 1, 1000,    100.00, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 608, 6, 1020,    12.95, 4);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 609,  date '2015-09-27', 'DIRECT', 900300, 'USPS1',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 609, 1, 1080,    25.00, 5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 609, 3, 1010,   175.00, 20);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 609, 2, 1040,   300.25, 20);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 610,  date '2015-09-27', 'DIRECT', 903000, 'UPSGR',  1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 610, 1, 4577,    29.95, 2);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 611,  date '2015-09-30', 'DIRECT', 403000, 'USPS2',  1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 611, 1, 1080,    25.00, 12);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 105,   date '2015-10-01', 'DIRECT', 403000, 'UPSGR',  1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 105, 1, 1030,    25.00, 12);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 105, 2, 1020,    12.95, 12);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 105, 3, 1010,   150.00,  5);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 106,   date '2015-10-01', 'DIRECT', 401250, 'FEDEX1', 2, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 106,1 , 1060,   255.95,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 107,   date '2015-10-02', 'ONLINE', 403050, 'USPS1', 2, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 107, 1, 1110,    49.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 108,   date '2015-10-02', 'ONLINE', 403000, 'USPS1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 108, 1, 1080,    22.50,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 109,   date '2015-10-12', 'DIRECT', 403000, 'UPSGR',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 109, 1, 1130,   149.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 110,   date '2015-10-12', 'DIRECT', 404950, 'FEDEX1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 110, 1, 1090,   149.99,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 110, 2, 1130,   149.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 400,   date '2015-10-15', 'ONLINE', 403100, 'USPS1', 2, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 400, 1, 5002,    23.00,  5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 400, 2, 5004,    15.00,  5);
+
+1 row created.
+
+SQL>        insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 400, 3, 5005,    45.00,  5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 400, 4, 5008,    10.00,  5);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 401,   date '2015-10-15', 'ONLINE', 403100, 'USPS1', 2, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 401, 1, 5002,    23.00,  3);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 401, 2, 4577,    29.95, 3);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 402,   date '2015-10-18', 'ONLINE', 403100, 'USPS1', 2, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 402, 1, 5002,    23.00,  3);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 402, 2, 4577,    29.95,  3);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 405,   date '2015-11-19', 'DIRECT', 408770, 'FEDEX1', 1, 145);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 405, 1, 1010,   150.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 405, 2, 1020,    12.95,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 405, 3, 1030,    29.95,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 405, 4, 1040,   349.95,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 405, 5, 1050,   269.95,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 405, 6, 1060,   255.95,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 407,   date '2015-11-15', 'DIRECT', 403100, 'FEDEX1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 407, 1, 5008,     8.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 407, 2, 5005,    42.15,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 407, 3, 5005,    42.50,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 408,   date '2015-11-20', 'DIRECT', 404950, 'FEDEX1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 408, 1, 1071,    15.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 111,   date '2015-11-01', 'DIRECT', 403000, 'UPSGR', 1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 111, 1, 1150,     4.99, 50);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 111, 2, 1141,    75.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 112,   date '2015-11-08', 'DIRECT', 401890, 'USPS1',  2, 145);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 112, 1, 1110,    49.99,  2);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 113,   date '2015-11-08', 'ONLINE', 401250, 'FEDEX2', 2, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 113, 1, 1080,    22.50,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 114,   date '2015-11-08', 'DIRECT', 402100, 'USPS1',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 114, 1, 1130,   125.00,  5);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 115,   date '2015-11-08', 'ONLINE', 402100, 'USPS2',  1, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 115, 1, 1000,   100.00,  2);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 115, 2, 1120,   475.00,  4);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 115, 3, 1080,    25.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 115, 4, 1100,    45.00,  4);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 116,   date '2015-11-12', 'ONLINE', 405000, NULL,  9, 155);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 117,  date '2015-11-28', 'ONLINE', 402100, NULL,  9, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 117, 1, 1150,     4.99,   4);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 117, 2, 1141,    75.00,  4);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 117, 3, 1030,    27.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 118,   date '2015-11-28', 'DIRECT', 403010, NULL,  3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 118, 1, 1125,   475.00,  4);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 119,   date '2015-11-28','DIRECT', 401250, NULL, 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 119, 1, 1070,    22.50, 10);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 123,   date '2015-12-05','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 124,   date '2015-12-07','DIRECT', 409160, 'FEDEX1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 124, 1, 1151,    14.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 125,   date '2015-12-09','DIRECT', 409160, 'FEDEX1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 125, 1, 1152,    55.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 126,   date '2015-12-15','DIRECT', 409190, 'FEDEX1', 3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 126, 1, 1100,    49.99, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 127,   date '2015-12-15','ONLINE', 915001, 'USPS1', 4, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 127, 1, 1100,    49.99,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 127, 3, 1080,    25.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 127, 2, 1110,    49.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 128,   date '2015-12-15','ONLINE', 409030, 'FEDEX1', 4, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 128, 1, 1060,   255.95,  2);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 129,   date '2015-12-15','DIRECT', 915001, 'FEDEX1', 7, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 129, 1, 1141,    99.99,  3);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 130,   date '2015-12-30','ONLINE', 409030, 'USPS2', 7, 145);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 130, 1, 1120,   500.00,1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 130, 2, 1125,   500.00, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 130, 3, 1090,   145.00, 1);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2503,   date '2016-01-04', 'DIRECT', 404100, 'USPS1', 2,  155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2503, 1, 1130,   149.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2504,   date '2016-01-11', 'DIRECT', 404100, 'UPSGR',  9, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2504, 1, 1130,   149.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2505,   date '2016-01-12', 'DIRECT', 403000, 'UPSGR',  1, 145);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2505, 1, 1080,    22.50,  2);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2505, 2, 1110,    49.99, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2505, 3, 1060,   255.95, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2506,   date '2016-01-12', 'DIRECT', 401250, 'UPSEXP', 2, 150);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2120,   date '2016-01-02','DIRECT', 903000, NULL, 3, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2120, 1, 1010,   175.00, 10);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2121,   date '2016-01-03','DIRECT', 903000, NULL, 3, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2121, 1, 1010,   175.00, 20);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2121, 2, 1040,   300.25,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2122,   date '2016-01-23','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2122, 1, 1070,    25.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2122, 2, 1071,    25.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2122, 3, 1072,    25.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2122, 5, 1070,    15.00,  2);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders(order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2507,   date '2016-02-01', 'ONLINE', 403050, 'USPS1', 2, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2507, 2, 1090,   145.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2805,  date '2016-01-05', 'DIRECT', 404100, 'UPSGR',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2805, 1, 1080,    25.00, 12);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2805, 2, 1130,    112.95, 12);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2805, 3, 1060,   125.00,  5);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2806,  date '2016-01-07', 'DIRECT', 409160, 'FEDEX1',  1, 207);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2806, 1, 1152,    55.00, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2807,  date '2016-01-15', 'DIRECT', 409160, 'FEDEX1',  1, 207);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2807, 1, 1070,    22.25, 10);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 3808,  date '2016-01-26', 'DIRECT', 403000, 'UPSGR',  1, 207);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3808, 1, 1000,    100.00, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3808, 2, 1010,    125.00, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3808, 3, 1020,    12.95, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 3809,  date '2016-01-27', 'DIRECT', 900300, 'USPS1',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3809, 1, 1080,    25.00, 5);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 3810,  date '2016-01-27', 'DIRECT', 903000, 'UPSGR',  1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3810, 1, 4577,    29.95, 2);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2811,  date '2016-01-31', 'DIRECT', 403000, 'UPSEXP',  1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2811, 1, 1080,    25.00, 12);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2811, 2, 1080,    25.00, 12);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2508,   date '2016-02-01', 'ONLINE', 403000, 'USPS1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2508, 1, 1152,    55.25,  4);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2508, 2, 1152,    27.15,  6);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2509,   date '2016-02-12', 'DIRECT', 403000, 'UPSGR',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2509, 1, 1090,   149.99,  5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2509, 2, 1130,   149.99,  2);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 4510,   date '2016-02-01', 'DIRECT', 404950, 'FEDEX1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 4510, 1, 1071,    25.00,  2);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 4510, 2, 1072,    24.25,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 4511,   date '2016-02-01', 'DIRECT', 403000, 'UPSGR', 1, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 4511, 2, 1130,   149.99,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 4511, 3, 1060,   255.95,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 3515,   date '2016-02-02','ONLINE', 409150, 'USPS1', 3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3515, 1, 1110,    49.99,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 3516,   date '2016-02-02','ONLINE', 409150, 'USPS1', 3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3516, 1, 1020,    12.95,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 3518,   date '2016-02-03','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3518, 1, 1141,    75.99,  3);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3518, 2, 1125,   500.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3518, 3, 2014,   15.59,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3518, 4, 2984,   15.87,  1);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2218,   date '2016-03-08','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2218, 7, 2746,    14.50,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2218, 5, 1141,    75.99,  3);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2218, 3, 1125,   500.00,  5);
+
+1 row created.
+
+SQL>  insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2218, 1, 2014,    15.95,  5);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 223,   date '2016-03-05','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 223, 1, 1130,   148.99, 1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 223, 5, 1150,     7.25, 50);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 223, 6, 1141,    75.99,  3);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 4224,   date '2016-03-07','DIRECT', 409160, 'FEDEX1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 4224, 1, 1090,   145.99,  10);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 4224, 4, 1070,    15.00,  10);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 2225,   date '2016-03-09','DIRECT', 409160, 'FEDEX1', 3, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2225, 1, 2412,    9.87,  0);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 2225, 2, 2947,    12.45,  5);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 3227,   date '2016-03-01', 'ONLINE', 403050, 'USPS1', 2, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3227, 1, 1150,     4.25, 50);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 3227, 2, 1141,    75.99,  3);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 519,   date '2016-04-04','ONLINE', 401890, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 519, 1, 1020,    12.95, 5);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 519, 2, 1110,    49.99, 1);
+
+1 row created.
+
+SQL> 
+SQL>  insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 520,   date '2016-04-04','ONLINE', 404900, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 520, 1, 1020,    12.95, 3);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 520, 2, 2747,    12.95, 3);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 522,   date '2015-04-05','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 522, 1, 1080,    22.50, 2);
+
+1 row created.
+
+SQL> 
+SQL>  insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 715,   date '2016-04-05','ONLINE', 409150, 'USPS1', 3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 715, 1, 1110,    49.99,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 715, 3, 2014,   15.59,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 715, 4, 2984,   15.87,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 716,    date '2016-04-06','ONLINE', 409150, 'USPS1', 3, 150);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 716, 1, 1020,    12.95,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 718,   date '2016-04-08','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 718, 1, 1141,    75.99,  3);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 718, 2, 1125,   500.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 523,   date '2016-04-05','ONLINE', 409150, 'USPS1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 523, 1, 1130,   149.99, 1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 524,   date '2016-04-07','DIRECT', 409160, 'FEDEX1', 3, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 524, 1, 1090,   145.99,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 524, 4, 1070,    15.00,  2);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 525,   date '2016-05-09','DIRECT', 409160, 'FEDEX1', 3, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 525, 1, 2412,    9.87,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 525, 2, 2947,    12.45,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 525, 3, 2014,    15.95,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 525, 5, 2746,    14.50,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 527,   date '2016-05-01', 'ONLINE', 403050, 'USPS1', 2, null);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 527, 1, 1150,     4.25, 50);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 527, 2, 1141,    75.99,  3);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 528,   date '2016-05-01', 'ONLINE', 403000, 'USPS1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 528, 1, 1070,    25.50,  2);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 528, 2, 1030,    20.50, 16);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 528, 4, 1010,   150.00, 15);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 529,   date '2016-05-12', 'DIRECT', 403000, 'UPSEXP',  1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 529, 1, 1130,   149.99,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 529, 3, 1020,    12.95, 10);
+
+1 row created.
+
+SQL> 
+SQL>  insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 535,   date '2016-05-12', 'DIRECT', 404950, 'FEDEX1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 535, 1, 1040,   300.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 535, 2, 1050,   225.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> insert into oe_orderHeaders (order_id, order_date, order_mode, customer_id, shipping_mode_id, order_status, sales_rep_id)
+  2         values ( 536,   date '2016-05-12', 'DIRECT', 403000, 'FEDEX1', 1, 155);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 536, 1, 1040,   300.00,  1);
+
+1 row created.
+
+SQL> insert into oe_orderDetails (order_id, line_item_id, prod_id, quoted_price, quantity_ordered)
+  2         values ( 536, 2, 1050,   225.00,  1);
+
+1 row created.
+
+SQL> 
+SQL> 
+SQL> commit;
+
+Commit complete.
+
+SQL> 
+SQL> /*  TASK 04 */
+SQL> VARIABLE result NUMBER
+SQL> BEGIN
+  2    SELECT salary into :result
+  3    FROM emp_employees
+  4    WHERE emp_id=145;
+  5    DBMS_OUTPUT.put_line(:result);
+  6  END;
+  7  
+  8  /
+59000
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> /*  TASK 05 */
+SQL> 
+SQL> ACCEPT custNo PROMPT 'Please Enter Customer ID:'
+Please Enter Customer ID:408777
+SQL> 
+SQL> DECLARE
+  2    customerNo INT :=&custNo;
+  3    creditLimit NUMBER;
+  4  BEGIN
+  5    SELECT customer_credit_limit into creditLimit
+  6    FROM cust_customers
+  7    WHERE customer_id=customerNo;
+  8    DBMS_OUTPUT.put_line(creditLimit);
+  9  
+ 10  END;
+ 11  
+ 12  /
+old   2:   customerNo INT :=&custNo;
+new   2:   customerNo INT :=408777;
+7500
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> spool off
